@@ -53,13 +53,21 @@ class MITM(Auxiliary):
         PORT_LOCK.release()
 
         args = [
-            mitmdump, "-q",
+            mitmdump,
+            #"-q",
             "-s", '"{}" {}'.format(
                 script, self.task.options.get("mitm", "")
             ).strip(),
+            "-m", "transparent",
             "-p", "%d" % self.port,
             "-w", cwd("dump.mitm", analysis=self.task.id),
         ]
+
+        # Prepare the configuration for recovering TLS Master keys (useful for Wireshark)
+        mitm_sslkeylogfile = cwd("storage", "analyses", "%d" % self.task.id, "tlsmaster.txt")
+        os.environ["MITMPROXY_SSLKEYLOGFILE"] = mitm_sslkeylogfile
+        os.environ["MITMPROXY_PCAP"] = cwd("storage", "analyses", "%d" % self.task.id, "mitm.pcap")
+        log.debug("TLS Master keys will be dropped in this file: "+mitm_sslkeylogfile)
 
         self.proc = Popen(
             args, close_fds=True,
