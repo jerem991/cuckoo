@@ -334,6 +334,7 @@ class RequestDisplay {
     	summaryElement.find('.fa-chevron-right').addClass('fa-spinner fa-spin');
 
     	// this will later be replaced by the ajax call getting the content
+	if(!task_id) return;
 
         CuckooWeb.api_post("/analysis/api/task/network_http_data/", {
             "task_id": window.task_id,
