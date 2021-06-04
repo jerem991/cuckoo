@@ -18,6 +18,7 @@ import socket
 import struct
 import tempfile
 import urlparse
+from subprocess import call
 
 from cuckoo.common.abstracts import Processing
 from cuckoo.common.config import config
@@ -794,6 +795,7 @@ class Pcap2(object):
                 })
 
             if protocol == "http" or protocol == "https":
+                log.debug("http show: %s" % str(recv.raw))
                 request = sent.raw.split("\r\n\r\n", 1)[0]
                 response = recv.raw.split("\r\n\r\n", 1)[0]
 
@@ -850,6 +852,29 @@ class NetworkAnalysis(Processing):
 
     def run(self):
         results = {}
+
+        # merge pcap
+        try:
+            args = ['mergecap', '-w', "%s/dump.mergedd.pcap" % self.analysis_path, "%s/dump.pcap" % self.analysis_path, "%s/mitm.pcap" % self.analysis_path]
+
+            self.proc = call(
+                args, close_fds=True,
+            )
+
+            args = ['editcap', '-F', 'libpcap', '-T', 'ether', "%s/dump.mergedd.pcap" % self.analysis_path, "%s/dump.merged.pcap" % self.analysis_path]
+
+            self.proc = call(
+                args, close_fds=True,
+            )
+            
+            args = ['mv', "%s/dump.merged.pcap" % self.analysis_path, "%s/dump.pcap" % self.analysis_path]
+
+            self.proc = call(
+                args, close_fds=True,
+            )
+
+        except Exception as e:
+            log.debug("problem merging pcap: %s" % str(e))
 
         # Include any results provided by the mitm script.
         results["mitm"] = []
@@ -930,6 +955,7 @@ class NetworkAnalysis(Processing):
                     if x:
                         tlsmaster[x.group("sid").decode("hex")] = x.group("key").decode("hex")
                 
+            #log.debug("tlsmaster: %s" % str(tlsmaster))
             infile.close()
 
         except IOError:

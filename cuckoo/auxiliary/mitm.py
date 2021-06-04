@@ -58,11 +58,13 @@ class MITM(Auxiliary):
         # Prepare the configuration for recovering TLS Master keys (useful for Wireshark)
         tlsmaster_mitm = cwd("storage", "analyses", "%d" % self.task.id, "tlsmaster.mitm")
         os.environ["MITMPROXY_SSLKEYLOGFILE"] = tlsmaster_mitm
+        os.environ["MITMPROXY_PCAP"] = cwd("storage", "analyses", "%d" % self.task.id, "mitm.pcap")
         log.debug("TLS Master keys will be dropped in this file: "+tlsmaster_mitm)
 
         # Build arguments
         args = [
-            mitmdump, "-q",
+            mitmdump, 
+            #"-q",
             "-s", '"{}" {}'.format(
                 script, self.task.options.get("mitm", "")
             ).strip(),
@@ -73,7 +75,7 @@ class MITM(Auxiliary):
             args.extend( ["--mode", "transparent", "--showhost"] )
         if confdir != "":
             confdir_path = cwd( str(confdir) )
-            args.extend( ["--conf", confdir_path] )
+            #args.extend( ["--conf", confdir_path] )
             log.debug("MITM config dir '%s' will be used." % confdir_path)
 
         # Run mitmdump
